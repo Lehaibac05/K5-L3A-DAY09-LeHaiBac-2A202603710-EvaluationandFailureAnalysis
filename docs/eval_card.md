@@ -7,7 +7,7 @@ Card này đi kèm mỗi báo cáo và được dùng lại ở Day 10.
 - **Eval set:** v1, 14 item × 5 seed, nguồn lab8_public; nhãn: labels_v1.json
 - **Metric & ngưỡng:** (trích metric_spec.yaml)
 - **Kết quả baseline vs PR:** bảng + paired CI
-- **Judge:** tone_ok κ=…, P=…, R=…; helpful bị loại vì …
+- **Judge:** tone_ok κ=0.757, P=0.857, R=0.800 (đạt sàn, dùng non-blocking); helpful bị loại vì κ=0.375, R=0.300: bỏ sót 21/30 lỗi, 18 trong đó là reply nói số tiền khác ledger (FM-08) mà judge không thể thấy. Chi tiết: `docs/judge_audit.md`.
 - **Trace case:** link `docs/trace_case.md`, bước sai đầu tiên, regression test
 - **Gate owner:** ai xử lý khi gate exit 1
 - **Phạm vi pilot:** …

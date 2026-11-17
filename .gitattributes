@@ -1,0 +1,4 @@
+# eval_set_sha hashes raw bytes: data files must be LF on every OS or CI and Windows disagree.
+*.jsonl text eol=lf
+*.json text eol=lf
+*.yaml text eol=lf

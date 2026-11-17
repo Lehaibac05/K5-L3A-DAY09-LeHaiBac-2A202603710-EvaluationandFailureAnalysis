@@ -48,3 +48,25 @@ def test_wrong_amount_in_ledger(graders):
 
 def test_override_event_breaks_db_fact(graders):
     assert graders.DbFactKept().evaluate(ctx(trial(events=[{"kind": "model_override", "payload": {}}]))).value is False
+
+
+def _reply(text):
+    return [{"kind": "reply", "payload": {"text": text}}]
+
+
+def test_reply_matches_ledger_fm08(graders):
+    g = graders.ReplyMatchesLedger()
+    ok = trial(refund_vnd=35000, events=_reply("Dạ, LogiX đã hoàn 35.000đ cho đơn O-107."))
+    assert g.evaluate(ctx(ok)).value is True
+    # FM-08: approval capped the host at 20.000 but the reply still says 35.000 (C-008)
+    mis = trial(refund_vnd=20000, events=_reply("Dạ, LogiX đã hoàn 35.000đ cho đơn O-808."))
+    assert g.evaluate(ctx(mis)).value is False
+    # host denied, ledger empty, reply claims a refund (FM-02 surfaces here too)
+    assert g.evaluate(ctx(trial(refund_vnd=0, refund_count=0,
+                                events=_reply("Dạ, LogiX đã hoàn 35.000đ cho đơn O-909.")))).value is False
+    # money moved but the reply says it was denied
+    assert g.evaluate(ctx(trial(events=_reply("Dạ, đơn O-107 chưa đủ điều kiện hoàn.")))).value is False
+    # an honest denial and a trace with no reply event both pass
+    assert g.evaluate(ctx(trial(refund_vnd=0, refund_count=0,
+                                events=_reply("Dạ, đơn O-202 chưa đủ điều kiện hoàn.")))).value is True
+    assert g.evaluate(ctx(trial())).value is True

@@ -45,3 +45,12 @@ Card này đi kèm mỗi báo cáo và được dùng lại ở Day 10.
   - **Với LLM thật**, cùng agent chạy hai lần sẽ không giống nhau (sampling, nhiệt độ, thay đổi phía nhà cung cấp), nên dải A/A > 0. Khi đó phải chạy A/A nhiều lần và đặt sàn ngoài dải đó; sàn nằm trong dải sẽ chặn PR trung thực một cách ngẫu nhiên. Số 0 ở đây là tính chất của MockLLM, không phải của agent.
   - Ở bộ seed này `pass_rate` cũng chặn được `flaky_regression` (Δ −0.064, CI [−0.114, −0.014]), nhưng chỉ sát mức: một bug ảnh hưởng ít item hơn sẽ có CI chạm 0 và lọt qua mean, trong khi pass_hat_5 vẫn bắt được vì chỉ cần 1 seed fail là item đó mất điểm.
 - **Giới hạn cỡ mẫu:** slice nhỏ (escalation 4 item, FM-06 chỉ 3 item) nên CI rất rộng; slice gate ở đây dựa vào sàn tuyệt đối nhiều hơn là CI. Bug chỉ xuất hiện ở 1/3 seed (`rare`) **không** được phát hiện ổn định với 5 seed: với 11..55 nó rơi đúng 1 seed (33), với bộ seed khác có thể rơi 0 hoặc 2 seed. Không hạ ngưỡng để "bắt cho bằng được"; muốn bắt ổn định phải tăng số seed.
+- **Chống gian lận eval (M7):** `gate.integrity_check` từ chối report không đáng tin **trước** khi so ngưỡng:
+  - metric NaN/inf; `evaluator_failures` khác rỗng (kể cả trên run xanh); dòng có giá trị None hoặc không phải bool cho metric có grader;
+  - lưới (item, seed): trùng dòng, số dòng ≠ items × seeds, manifest khác baseline, tập (item, seed) khác baseline (bỏ dòng fail, chọn seed đẹp);
+  - slice tag của item khác baseline (gắn lại nhãn để thoát slice);
+  - metric trong report khác giá trị tính lại từ rows (sửa tay con số);
+  - ratchet với `--base-spec` cùng eval-set version: hạ `min`, tăng `max`, bỏ `no_significant_drop`, bỏ `blocking`, xoá metric/slice, đổi seeds/eval_set/labels/bootstrap.
+
+  Kết quả: 4/4 trap công khai (`lab9.traps`) và 13 trap tự dựng (trùng dòng giữ nguyên số lượng, evaluator_failures trên run xanh, sửa tay metric, gắn lại slice, bool dạng chuỗi, bỏ item kèm sửa manifest, nới từng ngưỡng/slice…) đều bị chặn với lý do `INTEGRITY`.
+  - **Giới hạn:** report được sửa nhất quán (đổi giá trị từng dòng rồi tính lại metric) không thể phát hiện chỉ từ file. Phòng thủ thật là CI **tự chạy lại eval** trên code của PR (`lab9.eval` trong workflow), không bao giờ dùng report do người viết PR commit lên làm đầu vào cho gate.
